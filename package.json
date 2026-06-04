@@ -1,0 +1,48 @@
+{
+  "name": "ira-researcher",
+  "version": "1.0.0",
+  "description": "The most powerful browser automation MCP server — 40 tools, ghost effects, stealth mode, DevTools access",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "ira-researcher": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "puppeteer": "^23.0.0",
+    "zod": "^3.23.0"
+  },
+  "keywords": [
+    "mcp",
+    "browser",
+    "automation",
+    "puppeteer",
+    "ghost",
+    "devtools",
+    "stealth",
+    "claude",
+    "cursor",
+    "ai-agent",
+    "web-scraping",
+    "headless",
+    "chrome",
+    "mcp-server"
+  ],
+  "author": "bidre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bidre/IRA-RESEARCHER.git"
+  },
+  "homepage": "https://github.com/bidre/IRA-RESEARCHER#readme",
+  "bugs": {
+    "url": "https://github.com/bidre/IRA-RESEARCHER/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

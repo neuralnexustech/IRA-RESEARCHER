@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+ira_profile_*/
+ira_debug.log
+*.log
+.env
+.DS_Store
+Thumbs.db
