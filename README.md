@@ -1,31 +1,76 @@
 # 🔬 IRA-RESEARCHER — Browser Automation MCP Server
 
-The **most powerful browser automation MCP server** — 40 tools, 7 ghost effects, stealth mode, and full DevTools access.
+> **MCP browser server** for Claude, Cursor, Copilot, OpenCode, and any MCP-compatible AI tool.
+> **40 tools**, ghost panel, stealth mode, full DevTools access. No API keys needed.
 
 > **Powered by [Neural Nexus Tech](https://neuralnexustech.com/)**
 
-## ✨ Features
+**Tags:** `mcp server` `mcp browser` `browser automation` `puppeteer mcp` `claude browser` `cursor mcp` `ai agent browser` `mcp tools` `headless browser` `web scraping mcp` `devtools mcp` `ghost panel`
 
-- **40 tools** — navigation, interaction, vision, tabs, DevTools, utility, health
-- **👻 Ghost effects** — floating action panel, click ripples, typing glow, drag arrows, scroll indicators, screenshot flash
-- **🛡️ Stealth mode** — puppeteer-extra anti-detection
-- **🌐 Auto proxy rotation** — random proxy from a pool
-- **🔧 Full DevTools** — console, network, elements, styles, performance, storage, accessibility audit
-- **🏃 Auto browser launch** — no Chrome extension needed
-- **🔑 Zero API keys** — no LLM dependency
+## ✨ What is this?
 
-## 📋 Quick Start
+IRA-RESEARCHER is an **MCP (Model Context Protocol) server** that gives AI assistants full control of a Chrome browser. It works with **Claude Desktop, Claude Code, Cursor, VS Code Copilot, OpenCode, Windsurf, Aider, Cline**, and any tool that supports MCP.
 
-### 1. Install
+- **40 tools** — navigate, click, type, screenshot, read pages, inspect elements, run JavaScript, intercept requests, and more
+- **👻 Ghost panel** — real-time overlay showing every action in the browser
+- **🛡️ Stealth mode** — anti-detection evasions to avoid bot blocks
+- **🔧 Full DevTools** — console, network, performance, storage, accessibility audit
+- **🏃 Auto browser launch** — opens Chrome automatically, no extension needed
+- **🔑 Zero API keys** — runs locally, no cloud dependency
+
+## 📋 Quick Start (2 steps)
+
+### Option A: Run from npm (easiest)
+
 ```powershell
+npm install -g ira-researcher
+```
+
+Then add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "ira-researcher": {
+      "command": "ira-researcher",
+      "env": {
+        "IRA_HEADLESS": "false",
+        "IRA_WINDOW": "maximize",
+        "IRA_GHOST": "true"
+      }
+    }
+  }
+}
+```
+
+### Option B: Run from source
+
+```powershell
+git clone https://github.com/neuralnexustech/IRA-RESEARCHER.git
 cd IRA-RESEARCHER
 npm install
 npx puppeteer browsers install chrome
 ```
 
-### 2. Add to Any MCP Client
+Then add to your MCP config (replace path):
 
-**Replace `C:\\path\\to\\IRA-RESEARCHER`** with the actual path to this folder.
+```json
+{
+  "mcpServers": {
+    "ira-researcher": {
+      "command": "node",
+      "args": ["C:\\path\\to\\IRA-RESEARCHER\\src\\index.js"],
+      "env": {
+        "IRA_HEADLESS": "false",
+        "IRA_WINDOW": "maximize",
+        "IRA_GHOST": "true"
+      }
+    }
+  }
+}
+```
+
+### Add to Any MCP Client
 
 <details>
 <summary><b>Cursor</b></summary>
