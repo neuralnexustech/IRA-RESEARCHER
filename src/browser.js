@@ -304,5 +304,20 @@ export async function launchBrowser() {
     })();
   });
 
-  return { browser, cdp: firstCdp };
+  // ─── Auto-Recovery on Crash ───────────────────────────────────────────────
+
+  let recoveryCallback = null;
+
+  browser.on("disconnected", () => {
+    console.error("[IRA] ⚠️  Browser disconnected — auto-recovery will trigger");
+    if (recoveryCallback) {
+      recoveryCallback();
+    }
+  });
+
+  function onCrash(callback) {
+    recoveryCallback = callback;
+  }
+
+  return { browser, cdp: firstCdp, onCrash };
 }

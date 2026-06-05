@@ -24,11 +24,48 @@ process.on("uncaughtException", (err) => {
   console.error("[IRA] Uncaught exception:", err?.message || err);
 });
 
+// ─── Auto-Recovery State ────────────────────────────────────────────────────
+
+let recoveryInProgress = false;
+
 async function main() {
-  const { browser, cdp } = await launchBrowser();
-  const pages = await browser.pages();
-  const page = pages[0] || await browser.newPage();
-  const ctx = { browser, page, cdp, ghost: true };
+  let { browser, cdp, onCrash } = await launchBrowser();
+  let pages = await browser.pages();
+  let page = pages[0] || await browser.newPage();
+  let ctx = { browser, page, cdp, ghost: true };
+
+  // ─── Auto-Recovery Handler ──────────────────────────────────────────────
+  onCrash(async () => {
+    if (recoveryInProgress) return;
+    recoveryInProgress = true;
+    console.error("[IRA] 🔄 Auto-recovery starting...");
+
+    try {
+      // Wait a moment for cleanup
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Launch new browser
+      const result = await launchBrowser();
+      browser = result.browser;
+      cdp = result.cdp;
+      pages = await browser.pages();
+      page = pages[0] || await browser.newPage();
+
+      // Update context
+      ctx.browser = browser;
+      ctx.page = page;
+      ctx.cdp = cdp;
+
+      // Re-register crash handler
+      result.onCrash(onCrash);
+
+      console.error("[IRA] ✅ Auto-recovery complete — browser restarted");
+      recoveryInProgress = false;
+    } catch (e) {
+      console.error("[IRA] ❌ Auto-recovery failed:", e.message);
+      recoveryInProgress = false;
+    }
+  });
 
   const server = new McpServer({ name: "ira-researcher", version: "1.0.0" });
   const api = createPipeline(ctx, server);
