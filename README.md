@@ -2,6 +2,8 @@
 
 The **most powerful browser automation MCP server** — 40 tools, 7 ghost effects, stealth mode, and full DevTools access.
 
+> **Powered by [Neural Nexus AI](https://neuralnexustech.com/)**
+
 ## ✨ Features
 
 - **40 tools** — navigation, interaction, vision, tabs, DevTools, utility, health

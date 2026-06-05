@@ -1,7 +1,7 @@
 {
   "name": "ira-researcher",
-  "version": "1.0.0",
-  "description": "The most powerful browser automation MCP server — 40 tools, ghost effects, stealth mode, DevTools access",
+  "version": "1.0.1",
+  "description": "The most powerful browser automation MCP server — 40 tools, ghost effects, stealth mode, DevTools access. Powered by Neural Nexus AI (https://neuralnexustech.com/)",
   "main": "src/index.js",
   "type": "module",
   "bin": {
