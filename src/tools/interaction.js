@@ -82,8 +82,25 @@ export async function typeText(ctx, index, text) {
     await ctx.page.keyboard.up("Control");
     await ctx.page.keyboard.press("Backspace");
 
-    for (const char of text) {
-      await ctx.page.keyboard.type(char, { delay: 30 + Math.random() * 50 });
+    // Human-like typing with variable delays
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const prev = i > 0 ? text[i - 1] : '';
+      // Base delay 30-80ms
+      let delay = 30 + Math.random() * 50;
+      // Pause longer at word boundaries (space or punctuation)
+      if (char === ' ' || '.!?,;:'.includes(char)) {
+        delay += 60 + Math.random() * 80;
+      }
+      // Occasional longer pause (like thinking) — 5% chance
+      if (Math.random() < 0.05) {
+        delay += 150 + Math.random() * 200;
+      }
+      // Slightly faster for repeated characters
+      if (char === prev) {
+        delay *= 0.6;
+      }
+      await ctx.page.keyboard.type(char, { delay });
     }
     await ghostLog(ctx, "success", `Typed "${text.substring(0, 30)}${text.length > 30 ? "..." : ""}"`);
     return textResult(`Typed "${text.substring(0, 50)}${text.length > 50 ? "..." : ""}"`);
