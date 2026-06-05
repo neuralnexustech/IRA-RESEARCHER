@@ -319,17 +319,3 @@ IRA-RESEARCHER/
 ├── package.json
 └── README.md
 ```
-
-## 📊 Comparison
-
-| Feature | Claude-in-Chrome | Browser MCP | browser-use | **IRA-RESEARCHER** |
-|---|---|---|---|---|
-| Tools | 18 | 12 | 14+20 | **40** |
-| Browser launch | Manual | Manual | Auto | **Auto** |
-| Extension needed | Yes | Yes | No | **No** |
-| Ghost effects | None | None | Panel | **7 effects** |
-| Stealth mode | No | No | Cloud | **puppeteer-extra** |
-| Proxy rotation | No | No | No | **Auto** |
-| DevTools access | Console+Net | Console | None | **9 tools** |
-| API keys needed | No | No | Yes | **No** |
-| Setup steps | 4 | 3 | 2 | **2** |
