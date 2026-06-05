@@ -220,6 +220,10 @@ export function ghostScript() {
         0%, 100% { opacity: 1; }
         50%      { opacity: 0; }
       }
+      @keyframes iraLabelIn {
+        from { opacity: 0; transform: scale(0.6); }
+        to   { opacity: 1; transform: scale(1); }
+      }
     \`;
     document.head.appendChild(s);
   }
@@ -621,16 +625,53 @@ export function ghostScript() {
       case 'drag':   dragPath(d.fromX, d.fromY, d.toX, d.toY);               break;
       case 'scroll': scrollIndicator(d.direction, d.amount);                   break;
       case 'flash':  screenshotFlash();                                         break;
+      case 'labels': labelsVisible ? hideLabels() : showLabels();              break;
     }
   });
 
-  // ─── Keyboard shortcut ─────────────────────────────────────────────────────
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
-      e.preventDefault();
-      isOpen ? closePanel() : openPanel();
-    }
-  });
+  // ─── Element Index Labels ──────────────────────────────────────────────────
+  let labelsVisible = false;
+  let labelOverlays = [];
+
+  const INTERACTIVE_SELECTOR = 'a[href], button, input, textarea, select, [role="button"], [role="link"], [role="tab"], [onclick], [tabindex]:not([tabindex="-1"])';
+
+  function showLabels() {
+    hideLabels();
+    labelsVisible = true;
+    const els = document.querySelectorAll(INTERACTIVE_SELECTOR);
+    const visible = Array.from(els).filter(el => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.top < window.innerHeight && r.bottom > 0;
+    });
+    visible.forEach((el, i) => {
+      const badge = document.createElement('div');
+      badge.className = 'ira-label-badge';
+      const r = el.getBoundingClientRect();
+      badge.style.cssText = \`
+        position:fixed; left:\${r.left - 4}px; top:\${r.top - 14}px;
+        min-width:18px; height:18px; padding:0 4px;
+        background:#f97316; color:#fff; font-size:10px; font-weight:700;
+        font-family:monospace; border-radius:4px; z-index:2147483640;
+        display:flex; align-items:center; justify-content:center;
+        pointer-events:none; box-shadow:0 2px 6px rgba(0,0,0,0.4);
+        animation:iraLabelIn 0.15s ease;
+      \`;
+      badge.textContent = String(i + 1);
+      document.body.appendChild(badge);
+      labelOverlays.push(badge);
+    });
+    addLog('info', \`Labels shown: \${visible.length} interactive elements\`);
+  }
+
+  function hideLabels() {
+    labelsVisible = false;
+    labelOverlays.forEach(el => el.remove());
+    labelOverlays = [];
+  }
+
+  function toggleLabels() {
+    labelsVisible ? hideLabels() : showLabels();
+  }
 
   // ─── Init ──────────────────────────────────────────────────────────────────
   function init() {
@@ -677,6 +718,18 @@ export function ghostScript() {
     init();
   }
 
+  // ─── Keyboard shortcuts ────────────────────────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      isOpen ? closePanel() : openPanel();
+    }
+    if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+      e.preventDefault();
+      toggleLabels();
+    }
+  });
+
   // ─── Public API ────────────────────────────────────────────────────────────
   window.__iraGhost = {
     addLog,
@@ -685,6 +738,9 @@ export function ghostScript() {
     dragPath,
     scrollIndicator,
     screenshotFlash,
+    showLabels,
+    hideLabels,
+    toggleLabels,
     openPanel,
     closePanel,
     clearLogs,
