@@ -1,12 +1,5 @@
 import { textResult, ghostLog, ghostRipple, ghostTypingGlow, ghostDrag } from "../utils.js";
-
-function getInteractiveSelector() {
-  return 'a, button, input, textarea, select, [role="button"], [role="link"], [role="tab"], [onclick], [tabindex]';
-}
-
-function getInputSelector() {
-  return 'input, textarea, [contenteditable="true"], [role="textbox"]';
-}
+import { getInteractiveSelector, getInputSelector } from "./selectors.js";
 
 function getElementCoords(page, index, selector) {
   return page.evaluate((idx, sel) => {
@@ -53,7 +46,7 @@ export async function click(ctx, args) {
 
 export async function typeText(ctx, index, text) {
   try {
-    const selector = getInputSelector();
+    const selector = getInteractiveSelector();
     const coords = await ctx.page.evaluate(({ idx, sel }) => {
       const elements = document.querySelectorAll(sel);
       let count = 0;
@@ -61,6 +54,8 @@ export async function typeText(ctx, index, text) {
         const rect = el.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
           if (count === idx) {
+            const isInput = ['INPUT', 'TEXTAREA'].includes(el.tagName) || el.isContentEditable || el.getAttribute('role') === 'textbox';
+            if (!isInput) return { error: `Element ${idx} is not an input field` };
             el.focus();
             el.click();
             el.scrollIntoView({ block: "center" });
@@ -72,7 +67,8 @@ export async function typeText(ctx, index, text) {
       return null;
     }, { idx: index, sel: selector });
 
-    if (!coords) return textResult(`Input element ${index} not found`);
+    if (!coords) return textResult(`Element ${index} not found`);
+    if (coords.error) return textResult(coords.error);
 
     await ghostTypingGlow(ctx);
     await ctx.page.mouse.click(coords.x, coords.y);
@@ -172,9 +168,7 @@ export async function upload(ctx, index, filePath) {
       return true;
     }, index);
     if (!found) return textResult(`File input ${index} not found`);
-    const [fileChooser] = await Promise.all([
-      ctx.page.waitForFileChooser({ timeout: 5000 }),
-    ]);
+    const fileChooser = await ctx.page.waitForFileChooser({ timeout: 5000 });
     await fileChooser.accept([filePath]);
     await ghostLog(ctx, "success", `Uploaded file to element ${index}`);
     return textResult(`Uploaded ${filePath}`);
@@ -189,14 +183,15 @@ export async function keyboard(ctx, key, modifiers = []) {
       await ctx.page.keyboard.down(mod);
     }
     await ctx.page.keyboard.press(key);
-    for (const mod of modifiers) {
-      await ctx.page.keyboard.up(mod);
-    }
     const label = modifiers.length ? modifiers.join("+") + "+" + key : key;
     await ghostLog(ctx, "action", `Pressed ${label}`);
     return textResult(`Pressed ${label}`);
   } catch (e) {
     return textResult(`Keyboard failed: ${e.message}`);
+  } finally {
+    for (const mod of modifiers) {
+      await ctx.page.keyboard.up(mod).catch(() => {});
+    }
   }
 }
 

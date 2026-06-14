@@ -1,4 +1,5 @@
 import { textResult, ghostFlash } from "../utils.js";
+import { getInteractiveSelector } from "./selectors.js";
 
 export async function screenshot(ctx, fullPage, format, quality) {
   try {
@@ -29,7 +30,7 @@ export async function screenshot(ctx, fullPage, format, quality) {
 export async function elementScreenshot(ctx, index) {
   try {
     const el = await ctx.page.evaluate((idx) => {
-      const els = document.querySelectorAll('a, button, input, textarea, select, [role="button"], [role="link"], [tabindex]');
+      const els = document.querySelectorAll(getInteractiveSelector());
       let count = 0;
       for (const e of els) {
         const rect = e.getBoundingClientRect();
@@ -93,17 +94,21 @@ export async function extractImages(ctx) {
       // canvas
       document.querySelectorAll("canvas").forEach((c) => {
         if (c.width > 0 && c.height > 0) {
-          const dataUrl = c.toDataURL();
-          if (dataUrl && dataUrl.length > 100 && !seen.has(dataUrl.substring(0, 50))) {
-            seen.add(dataUrl.substring(0, 50));
-            results.push({
-              src: dataUrl.substring(0, 80) + "...",
-              alt: c.getAttribute("aria-label") || "",
-              type: "canvas",
-              width: c.width,
-              height: c.height,
-              displayed: c.getBoundingClientRect().width > 0,
-            });
+          try {
+            const dataUrl = c.toDataURL();
+            if (dataUrl && dataUrl.length > 100 && !seen.has(dataUrl.substring(0, 50))) {
+              seen.add(dataUrl.substring(0, 50));
+              results.push({
+                src: dataUrl.substring(0, 80) + "...",
+                alt: c.getAttribute("aria-label") || "",
+                type: "canvas",
+                width: c.width,
+                height: c.height,
+                displayed: c.getBoundingClientRect().width > 0,
+              });
+            }
+          } catch (e) {
+            // Cross-origin canvas, skip
           }
         }
       });

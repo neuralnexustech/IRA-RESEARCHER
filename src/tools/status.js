@@ -98,7 +98,7 @@ export async function health(ctx) {
       uptime: `${uptime}s`,
       browser: {
         connected: browserConnected,
-        pid: browser?.process()?.pid ?? null,
+        pid: browser?.process?.pid ?? null,
         pagesOpen: pageCount,
       },
       currentPage: {

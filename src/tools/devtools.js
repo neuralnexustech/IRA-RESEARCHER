@@ -1,9 +1,10 @@
 import { textResult } from "../utils.js";
+import { getInteractiveSelector } from "./selectors.js";
 
 export async function inspectElement(ctx, index) {
   try {
     const info = await ctx.page.evaluate((idx) => {
-      const els = document.querySelectorAll('a, button, input, textarea, select, [role="button"], [role="link"], [tabindex]');
+      const els = document.querySelectorAll(getInteractiveSelector());
       let count = 0;
       for (const el of els) {
         const rect = el.getBoundingClientRect();
@@ -43,7 +44,7 @@ export async function inspectElement(ctx, index) {
 export async function getStyles(ctx, index) {
   try {
     const styles = await ctx.page.evaluate((idx) => {
-      const els = document.querySelectorAll('a, button, input, textarea, select, [role="button"], [role="link"], [tabindex]');
+      const els = document.querySelectorAll(getInteractiveSelector());
       let count = 0;
       for (const el of els) {
         const rect = el.getBoundingClientRect();

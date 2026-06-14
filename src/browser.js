@@ -234,14 +234,19 @@ export async function launchBrowser() {
   const STEALTH_RUNNER = `(function() { ${STEALTH_SCRIPT} })();`;
 
   async function setupPageTracking(page) {
-    // Inject stealth + ghost
+    const isHtmlPage = await page.evaluate(() => document.contentType?.includes("text/html") ?? true).catch(() => false);
+    
+    // Inject stealth + ghost only on HTML pages
     await page.evaluateOnNewDocument(STEALTH_RUNNER);
-    await page.evaluateOnNewDocument(ghostScript());
+    if (isHtmlPage && ghost) {
+      await page.evaluateOnNewDocument(ghostScript());
+    }
 
     const buffer = { logs: [], requests: [] };
     page.__iraBuffer = buffer;
 
     const cdp = await page.target().createCDPSession();
+    page._iraCdp = cdp;
 
     await cdp.send("Runtime.enable");
     cdp.on("Runtime.consoleAPICalled", (msg) => {
@@ -269,7 +274,10 @@ export async function launchBrowser() {
     });
 
     page.on("close", () => { try { cdp.detach(); } catch {} });
-    page.on("domcontentloaded", () => console.error(`[IRA] DOM ready: ${page.url().substring(0, 120)}`));
+    page.on("domcontentloaded", () => {
+      console.error(`[IRA] DOM ready: ${page.url().substring(0, 120)}`);
+      page.__iraBuffer = { logs: [], requests: [] };
+    });
     page.on("load", () => console.error(`[IRA] Page loaded: ${page.url().substring(0, 120)}`));
     if (debug) page.on("console", msg => console.error(`[IRA-CONSOLE] [${msg.type()}] ${msg.text()}`));
     return cdp;

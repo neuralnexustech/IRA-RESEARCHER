@@ -34,7 +34,7 @@ export async function scroll(ctx, direction = "down", amount = 500) {
 
 export async function setViewport(ctx, width, height) {
   try {
-    const cdp = ctx.cdp || ctx.page._client();
+    const cdp = ctx.page._iraCdp || ctx.cdp || ctx.page._client();
     await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {});
     let windowId;
     try {
@@ -79,6 +79,7 @@ export async function intercept(ctx, urlPattern, action) {
   try {
     if (!action || action === "passthrough") {
       await ctx.page.setRequestInterception(false);
+      ctx.page.removeAllListeners("request");
       return textResult("Network interception disabled");
     }
     await ctx.page.setRequestInterception(true);
@@ -95,6 +96,7 @@ export async function intercept(ctx, urlPattern, action) {
         request.continue();
       }
     };
+    ctx.page.removeAllListeners("request");
     ctx.page.on("request", handler);
     return textResult(`Interception ${action} for "${urlPattern}"`);
   } catch (e) {

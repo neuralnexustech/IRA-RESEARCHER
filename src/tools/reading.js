@@ -1,11 +1,10 @@
 import { textResult } from "../utils.js";
+import { getInteractiveSelector } from "./selectors.js";
 
 export async function getState(ctx) {
   try {
-    const state = await ctx.page.evaluate(() => {
-      const interactive = document.querySelectorAll(
-        'a, button, input, textarea, select, [role="button"], [role="link"], [role="tab"], [onclick], [tabindex]'
-      );
+    const state = await ctx.page.evaluate((selector) => {
+      const interactive = document.querySelectorAll(selector);
       const elements = [];
       let visibleIdx = 0;
       interactive.forEach((el) => {
@@ -32,7 +31,7 @@ export async function getState(ctx) {
         elementCount: elements.length,
         elements,
       };
-    });
+    }, getInteractiveSelector());
     return textResult(JSON.stringify(state, null, 2));
   } catch (e) {
     return textResult(`Get state failed: ${e.message}`);
