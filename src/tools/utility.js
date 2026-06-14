@@ -104,6 +104,15 @@ export async function intercept(ctx, urlPattern, action) {
   }
 }
 
+export async function shutdown(ctx) {
+  try {
+    await ctx.browser.close();
+    return textResult("Browser closed successfully");
+  } catch (e) {
+    return textResult(`Shutdown failed: ${e.message}`);
+  }
+}
+
 export async function cookies(ctx, args) {
   try {
     const { action, name, value } = args;

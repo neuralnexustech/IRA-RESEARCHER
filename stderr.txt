@@ -1,0 +1,7 @@
+[IRA] ✅  HEADED mode — Chrome window will be visible.
+[IRA] Screen work area: 1920×1032
+[IRA] Window: maximize → 1920×1032 (detected screen: 1920×1032)
+[IRA] Chrome binary: C:\Users\bidre\.cache\puppeteer\chrome\win64-131.0.6778.204\chrome-win64\chrome.exe
+[IRA] Launching via PowerShell: Start-Process -FilePath "C:\Users\bidre\.cache\puppeteer\chrome\win64-131.0.6778.204\chrome-win64\chrome.exe" -ArgumentList '--no-sandbox --disable-blink-features=AutomationControlled --remote-debugging-port=9222 --disable-background-networking --disable-infobars --disable-features=ChromeWhatsNewUI,ChromeForTestingAutoLaunch,EnableAutomation --no-first-run --no-default-browser-check --user-data-dir=C:\Users\bidre\AppData\Local\Temp\ira_profile_1781415127592 --start-maximized' -WindowStyle Maximized
+[IRA] Chrome launched via PowerShell — PID: 14672
+[IRA] Puppeteer connected to Chrome (PID 14672)

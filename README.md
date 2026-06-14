@@ -301,9 +301,9 @@ Any MCP-compatible tool uses this JSON:
 
 ### 3. Use
 
-The 40 tools appear automatically: `ira_navigate`, `ira_click`, `ira_screenshot`, etc.
+The 43 tools appear automatically: `ira_navigate`, `ira_click`, `ira_screenshot`, etc.
 
-## 🧰 Tools (40)
+## 🧰 Tools (43)
 
 | Category | Tools |
 |---|---|
@@ -313,6 +313,7 @@ The 40 tools appear automatically: `ira_navigate`, `ira_click`, `ira_screenshot`
 | Tabs | `ira_tabs`, `ira_switch_tab`, `ira_close_tab`, `ira_new_tab` |
 | Debug & DevTools | `ira_console`, `ira_network`, `ira_javascript`, `ira_inspect_element`, `ira_get_styles`, `ira_performance`, `ira_storage`, `ira_network_timing`, `ira_audit_accessibility` |
 | Utility | `ira_wait`, `ira_scroll`, `ira_set_viewport`, `ira_cookies`, `ira_pdf`, `ira_intercept` |
+| Instance Management | `ira_shutdown`, `ira_instances`, `ira_kill_instance`, `ira_kill_all` |
 | Health & Status | `ira_health` |
 
 ## ⚙️ Environment Variables
@@ -348,11 +349,11 @@ Toggle panel: **Ctrl+Shift+I**
 ```
 IRA-RESEARCHER/
 ├── src/
-│   ├── index.js              ← Entry point (uses pipeline)
+│   ├── index.js              ← Entry point (43 tools, auto-recovery)
 │   ├── pipeline.js           ← Middleware: logging, timing, error wrapping
-│   ├── browser.js            ← Browser launcher + CDP console/network tracking
+│   ├── browser.js            ← Single Chrome instance + reuse + registry
 │   ├── utils.js              ← Shared helpers (textResult, ghost effects)
-│   ├── tools/                ← 40 tools (9 files)
+│   ├── tools/                ← 43 tools (10 files)
 │   │   ├── navigation.js     ← 4 tools
 │   │   ├── interaction.js    ← 7 tools
 │   │   ├── vision.js         ← 3 tools
@@ -360,7 +361,8 @@ IRA-RESEARCHER/
 │   │   ├── tabs.js           ← 4 tools
 │   │   ├── debug.js          ← 3 tools
 │   │   ├── devtools.js       ← 6 tools
-│   │   ├── utility.js        ← 6 tools (wait, scroll, set_viewport, cookies, pdf, intercept)
+│   │   ├── utility.js        ← 7 tools (wait, scroll, set_viewport, cookies, pdf, intercept, shutdown)
+│   │   ├── selectors.js      ← Shared element selectors
 │   │   └── status.js         ← 1 tool (ira_health)
 │   └── ghost/index.js        ← Ghost effects
 ├── package.json

@@ -3,7 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { launchBrowser } from "./browser.js";
+import { launchBrowser, shutdownBrowser, listInstances, killInstance } from "./browser.js";
 import { createPipeline } from "./pipeline.js";
 import * as nav from "./tools/navigation.js";
 import * as interact from "./tools/interaction.js";
@@ -27,50 +27,46 @@ process.on("uncaughtException", (err) => {
 // ─── Auto-Recovery State ────────────────────────────────────────────────────
 
 let recoveryInProgress = false;
+let browserInstance = null;
 
 async function main() {
-  let { browser, cdp, onCrash } = await launchBrowser();
+  let { browser, cdp } = await launchBrowser();
+  browserInstance = browser;
   let pages = await browser.pages();
   let page = pages[0] || await browser.newPage();
   let ctx = { browser, page, cdp, ghost: true };
 
   // ─── Auto-Recovery Handler ──────────────────────────────────────────────
-  onCrash(async () => {
+  browser.on("disconnected", async () => {
     if (recoveryInProgress) return;
     recoveryInProgress = true;
-    console.error("[IRA] 🔄 Auto-recovery starting...");
+    console.error("[IRA] Browser disconnected — auto-recovery starting...");
 
     try {
-      // Wait a moment for cleanup
-      await new Promise(r => setTimeout(r, 2000));
-
-      // Launch new browser
+      await new Promise((r) => setTimeout(r, 2000));
       const result = await launchBrowser();
       browser = result.browser;
+      browserInstance = browser;
       cdp = result.cdp;
       pages = await browser.pages();
       page = pages[0] || await browser.newPage();
 
-      // Update context
       ctx.browser = browser;
       ctx.page = page;
       ctx.cdp = cdp;
 
-      // Re-register crash handler
-      result.onCrash(onCrash);
-
-      console.error("[IRA] ✅ Auto-recovery complete — browser restarted");
+      console.error("[IRA] Auto-recovery complete — browser restarted");
       recoveryInProgress = false;
     } catch (e) {
-      console.error("[IRA] ❌ Auto-recovery failed:", e.message);
+      console.error("[IRA] Auto-recovery failed:", e.message);
       recoveryInProgress = false;
     }
   });
 
-  const server = new McpServer({ name: "ira-researcher", version: "1.0.0" });
+  const server = new McpServer({ name: "ira-researcher", version: "2.0.0" });
   const api = createPipeline(ctx, server);
 
-  // Navigation (4)
+  // ─── Navigation (4) ─────────────────────────────────────────────────────
   api.tool("ira_navigate", "Navigate to a URL with auto-retry on empty DOM", {
     url: z.string().describe("The URL to navigate to"),
   }, (ctx, { url }) => nav.navigate(ctx, url));
@@ -79,7 +75,7 @@ async function main() {
   api.tool("ira_go_forward", "Go forward in browser history", {}, (ctx) => nav.goForward(ctx));
   api.tool("ira_reload", "Reload the current page", {}, (ctx) => nav.reload(ctx));
 
-  // Interaction (7)
+  // ─── Interaction (7) ────────────────────────────────────────────────────
   api.tool("ira_click", "Click by index or coordinates", {
     index: z.number().optional().describe("Element index from ira_get_state"),
     x: z.number().optional().describe("X coordinate"),
@@ -115,7 +111,7 @@ async function main() {
     modifiers: z.array(z.string()).optional().default([]).describe("Modifier keys (e.g. ['Control'], ['Shift', 'Control'])"),
   }, (ctx, { key, modifiers }) => interact.keyboard(ctx, key, modifiers));
 
-  // Vision & Reading (9)
+  // ─── Vision & Reading (9) ───────────────────────────────────────────────
   api.tool("ira_screenshot", "Take a screenshot (returns image)", {
     fullPage: z.boolean().optional().default(false).describe("Full page or viewport only"),
     format: z.enum(["png", "jpeg"]).optional().describe("Image format (default: jpeg for viewport, png for full page)"),
@@ -144,7 +140,7 @@ async function main() {
     selector: z.string().optional().describe("CSS selector (optional, defaults to full page)"),
   }, (ctx, { selector }) => reading.getHtml(ctx, selector));
 
-  // Tab Management (4)
+  // ─── Tab Management (4) ─────────────────────────────────────────────────
   api.tool("ira_tabs", "List all open tabs", {}, (ctx) => tabs.tabs(ctx));
   api.tool("ira_switch_tab", "Switch to a different tab", {
     tabIndex: z.number().describe("Tab index to switch to"),
@@ -158,7 +154,7 @@ async function main() {
     url: z.string().optional().describe("URL to navigate to in the new tab"),
   }, (ctx, { url }) => tabs.newTab(ctx, url));
 
-  // Debug & DevTools (9)
+  // ─── Debug & DevTools (9) ───────────────────────────────────────────────
   api.tool("ira_console", "Read browser console logs", {
     pattern: z.string().optional().describe("Filter by regex pattern"),
     onlyErrors: z.boolean().optional().default(false).describe("Only return errors"),
@@ -194,7 +190,7 @@ async function main() {
 
   api.tool("ira_audit_accessibility", "Run accessibility audit", {}, (ctx) => devtools.auditAccessibility(ctx));
 
-  // Utility (6)
+  // ─── Utility (7) ────────────────────────────────────────────────────────
   api.tool("ira_wait", "Wait for seconds or element", {
     seconds: z.number().optional().default(3).describe("Seconds to wait"),
     selector: z.string().optional().describe("CSS selector to wait for"),
@@ -225,18 +221,77 @@ async function main() {
     action: z.enum(["block", "passthrough"]).describe("block to abort matching requests, passthrough to disable interception"),
   }, (ctx, { urlPattern, action }) => utility.intercept(ctx, urlPattern, action));
 
-  // Health & Status (1)
+  // ─── Instance Management (4) ────────────────────────────────────────────
+  api.tool("ira_shutdown", "Close browser and shutdown server", {}, async (ctx) => {
+    await shutdownBrowser(ctx.browser);
+    process.exit(0);
+  });
+
+  api.tool("ira_instances", "List all IRA Chrome instances", {}, async () => {
+    const instances = listInstances();
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(instances, null, 2)
+      }]
+    };
+  });
+
+  api.tool("ira_kill_instance", "Kill a specific IRA Chrome instance by PID", {
+    pid: z.number().describe("PID of the Chrome instance to kill"),
+  }, async ({ pid }) => {
+    const killed = await killInstance(pid);
+    return {
+      content: [{
+        type: "text",
+        text: killed ? `Instance PID ${pid} killed` : `Failed to kill PID ${pid}`
+      }]
+    };
+  });
+
+  api.tool("ira_kill_all", "Kill all IRA Chrome instances", {}, async () => {
+    const instances = listInstances();
+    let killed = 0;
+    for (const inst of instances) {
+      if (inst.alive) {
+        await killInstance(inst.pid);
+        killed++;
+      }
+    }
+    return {
+      content: [{
+        type: "text",
+        text: `Killed ${killed} IRA Chrome instance(s)`
+      }]
+    };
+  });
+
+  // ─── Health & Status (1) ────────────────────────────────────────────────
   api.tool("ira_health", "Check browser connection, page state, and server status", {}, (ctx) => status.health(ctx));
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("[IRA] IRA-RESEARCHER ready with 40 tools");
+  console.error("[IRA] IRA-RESEARCHER ready with 43 tools");
 }
 
-process.on("SIGINT", () => process.exit(0));
-process.on("SIGHUP", () => process.exit(0));
+async function cleanup() {
+  if (browserInstance) {
+    console.error("[IRA] Closing browser...");
+    try {
+      await browserInstance.close();
+      console.error("[IRA] Browser closed");
+    } catch (e) {
+      console.error("[IRA] Browser close error:", e.message);
+    }
+  }
+  process.exit(0);
+}
+
+process.on("SIGINT", cleanup);
+process.on("SIGHUP", cleanup);
+process.on("SIGTERM", cleanup);
 
 main().catch((err) => {
   console.error("[IRA] Fatal:", err.message);
-  process.exit(1);
+  cleanup();
 });
